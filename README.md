@@ -48,9 +48,9 @@ type State = Memory x File
 
 𝒫 ⟦s*⟧ = S*⟦s*⟧({}, [])
 
-𝒮 ⟦let i e⟧ (m,o) = ______________
-𝒮 ⟦fun i i* e⟧ (m,o) = ______________
-𝒮 ⟦i = e⟧ (m,o) = ______________
+𝒮 ⟦let i e⟧ (m,o) = ({...m, i: E ⟦e⟧ m})
+𝒮 ⟦fun i i* e⟧ (m,o) = ({...m, i: (i*, e)})
+𝒮 ⟦i = e⟧ (m,o) = ({...m, i: E ⟦e⟧ m})
 𝒮 ⟦print e⟧ (m,o) = (m, o + E ⟦e⟧ m)
 𝒮 ⟦while c do s*⟧ (m,o) = ______________
 
@@ -64,7 +64,7 @@ type State = Memory x File
 ℰ ⟦e1 ** e2⟧ m = ℰ ⟦e1⟧ m ** ℰ ⟦e2⟧ m
 ℰ ⟦- e⟧ m = - ℰ ⟦e⟧ m
 ℰ ⟦i e*⟧ m = ______________
-ℰ ⟦c ? e1 : e2⟧ m = ______________
+ℰ ⟦c ? e1 : e2⟧ m = if 𝒞 c m = T then ℰ ⟦e1⟧ m else ℰ ⟦e2⟧ m
 
 𝒞 ⟦true⟧ m = T
 𝒞 ⟦false⟧ m = F
