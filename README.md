@@ -41,42 +41,42 @@ type File = Num*
 type Memory = Ide -> Num  (in JS, a Map; in Python a dict)
 type State = Memory x File
 
-P: Prog -> File
+𝒫: Prog -> File
 E: Exp -> Memory -> Num
-S: Stmt -> State -> State
-C: Cond -> Memory -> Bool
+𝒮: Stmt -> State -> State
+𝒞: Cond -> Memory -> Bool
 
-P [[s*]] = S*[[s*]]({}, [])
+𝒫 [[s*]] = S*[[s*]]({}, [])
 
-S [[let i e]] (m,o) = ______________
-S [[fun i i* e]] (m,o) = ______________
-S [[i = e]] (m,o) = ______________
-S [[print e]] (m,o) = (m, o + E [[e]] m)
-S [[while c do s*]] (m,o) = ______________
+𝒮 [[let i e]] (m,o) = ______________
+𝒮 [[fun i i* e]] (m,o) = ______________
+𝒮 [[i = e]] (m,o) = ______________
+𝒮 [[print e]] (m,o) = (m, o + E [[e]] m)
+𝒮 [[while c do s*]] (m,o) = ______________
 
-E [[n]] m = n
-E [[i]] m = m i
-E [[e1 + e2]] m = E [[e1]] m + E [[e2]] m
-E [[e1 - e2]] m = E [[e1]] m - E [[e2]] m
-E [[e1 * e2]] m = E [[e1]] m * E [[e2]] m
-E [[e1 / e2]] m = E [[e1]] m / E [[e2]] m
-E [[e1 % e2]] m = E [[e1]] m % E [[e2]] m
-E [[e1 ** e2]] m = E [[e1]] m ** E [[e2]] m
-E [[- e]] m = - E [[e]] m
-E [[i e*]] m = ______________
-E [[c ? e1 : e2]] m = ______________
+ℰ [[n]] m = n
+ℰ [[i]] m = m i
+ℰ [[e1 + e2]] m = E [[e1]] m + E [[e2]] m
+ℰ [[e1 - e2]] m = E [[e1]] m - E [[e2]] m
+ℰ [[e1 * e2]] m = E [[e1]] m * E [[e2]] m
+ℰ [[e1 / e2]] m = E [[e1]] m / E [[e2]] m
+ℰ [[e1 % e2]] m = E [[e1]] m % E [[e2]] m
+ℰ [[e1 ** e2]] m = E [[e1]] m ** E [[e2]] m
+ℰ [[- e]] m = - E [[e]] m
+ℰ [[i e*]] m = ______________
+ℰ [[c ? e1 : e2]] m = ______________
 
-C [[true]] m = T
-C [[false]] m = F
-C [[e1 == e2]] m = E [[e1]] m = E [[e2]] m
-C [[e1 != e2]] m = not (E [[e1]] m = E [[e2]] m)
-C [[e1 < e2]] m = E [[e1]] m < E [[e2]] m
-C [[e1 <= e2]] m = E [[e1]] m <= E [[e2]] m
-C [[e1 > e2]] m = E [[e1]] m > E [[e2]] m
-C [[e1 >= e2]] m = E [[e1]] m >= E [[e2]] m
-C [[~c]] m = not (C [[c]] m)
-C [[c1 && c2]] m = if C [[c1]] m then C [[c2]] m else F
-C [[c1 || c2]] m = if C [[c1]] m then T else C [[c2]] m
+𝒞 [[true]] m = T
+𝒞 [[false]] m = F
+𝒞 [[e1 == e2]] m = E [[e1]] m = E [[e2]] m
+𝒞 [[e1 != e2]] m = not (E [[e1]] m = E [[e2]] m)
+𝒞 [[e1 < e2]] m = E [[e1]] m < E [[e2]] m
+𝒞 [[e1 <= e2]] m = E [[e1]] m <= E [[e2]] m
+𝒞 [[e1 > e2]] m = E [[e1]] m > E [[e2]] m
+𝒞 [[e1 >= e2]] m = E [[e1]] m >= E [[e2]] m
+𝒞 [[~c]] m = not (C [[c]] m)
+𝒞 [[c1 && c2]] m = if C [[c1]] m then C [[c2]] m else F
+𝒞 [[c1 || c2]] m = if C [[c1]] m then T else C [[c2]] m
 ```
 
 ## Using the Interpreter
