@@ -3,9 +3,8 @@ function interpret(program) {
 }
 
 const P = (program) => {
-  let statements = program.body
   let w = [{}, []]
-  for (let s of statements) {
+  for (let s of program.body) {
     w = S(s)(w)
   }
   return w[1]
