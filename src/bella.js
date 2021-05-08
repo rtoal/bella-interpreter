@@ -50,7 +50,8 @@ const E = (e) => (m) => {
     }
     case Unary: {
       // The only unary operator for e is negation
-      return -E(e)(m)
+      const { operand: e1 } = e
+      return -E(e1)(m)
     }
     case Binary: {
       const { op, left: e1, right: e2 } = e
@@ -70,8 +71,8 @@ const E = (e) => (m) => {
       }
     }
     case Conditional: {
-      const { test, consequent, alternate } = e
-      return C(test)(m) ? E(consequent)(m) : E(alternate)(m)
+      const { test: c, consequent: e1, alternate: e2 } = e
+      return C(c)(m) ? E(e1)(m) : E(e2)(m)
     }
     case Call: {
       const { id, args } = e
@@ -91,9 +92,9 @@ const C = (c) => (m) => {
       return c
     }
     case Unary: {
-      const { operand } = c
+      const { operand: c1 } = c
       // The only unary operator for conditional is the NOT
-      return !C(operand)(m)
+      return !C(c1)(m)
     }
     case Binary: {
       const { op, left, right } = c
@@ -192,6 +193,8 @@ const minus = (x, y) => new Binary("-", x, y)
 const times = (x, y) => new Binary("*", x, y)
 const remainder = (x, y) => new Binary("%", x, y)
 const power = (x, y) => new Binary("**", x, y)
+const negate = (x) => new Unary("-", x)
+const cond = (c, x, y) => new Conditional(c, x, y)
 const eq = (x, y) => new Binary("==", x, y)
 const noteq = (x, y) => new Binary("!=", x, y)
 const less = (x, y) => new Binary("<", x, y)
@@ -201,6 +204,7 @@ const greatereq = (x, y) => new Binary(">=", x, y)
 const call = (f, a) => new Call(f, a)
 const and = (x, y) => new Binary("&&", x, y)
 const or = (x, y) => new Binary("||", x, y)
+const not = (x, y) => new Unary("not", x)
 
 // Examples of use
 
@@ -235,3 +239,5 @@ console.log(
     ])
   )
 )
+
+console.log(P(program([print(cond(not(eq(3, 9)), negate(100), 200))])))
