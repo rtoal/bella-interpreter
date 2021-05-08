@@ -1,3 +1,5 @@
+// Interpreter functions
+
 const P = (p) => {
   let [m, o] = [{}, []]
   for (let s of p.body) {
@@ -7,97 +9,113 @@ const P = (p) => {
 }
 
 const S = (s) => ([m, o]) => {
-  if (s.constructor === VariableDeclaration) {
-    let { variable: v, initializer: e } = s
-    return [{ ...m, [v]: E(e)(m) }, o]
-  } else if (s.constructor === PrintStatement) {
-    let { argument: e } = s
-    return [m, [...o, E(e)(m)]]
-  } else if (s.constructor === Assignment) {
-    const { target: v, source: e } = s
-    return [{ ...m, [v]: E(e)(m) }, o]
-  } else if (s.constructor === WhileStatement) {
-    const { test, body } = s
-    if (C(test)(m)) {
-      body.forEach((stmt) => {
-        ;[m, o] = S(stmt)([m, o])
-      })
+  switch (s.constructor) {
+    case VariableDeclaration: {
+      const { variable: v, initializer: e } = s
+      return [{ ...m, [v]: E(e)(m) }, o]
+    }
+    case PrintStatement: {
+      const { argument: e } = s
+      return [m, [...o, E(e)(m)]]
+    }
+    case Assignment: {
+      const { target: v, source: e } = s
+      return [{ ...m, [v]: E(e)(m) }, o]
+    }
+    case WhileStatement: {
+      const { test, body } = s
+      if (C(test)(m) === false) {
+        return [m, o]
+      }
+      for (let s1 of body) {
+        ;[m, o] = S(s1)([m, o])
+      }
       return S(s)([m, o])
     }
-    return [m, o]
-  } else if (s.constructor === FunctionDeclaration) {
-    const { name, parameters, body } = s
-    return [{ ...m, [name]: { parameters, body } }, o]
+    case FunctionDeclaration: {
+      const { name: f, parameters: p, body: b } = s
+      return [{ ...m, [f]: [p, b] }, o]
+    }
   }
 }
 
 const E = (e) => (m) => {
-  if (typeof e === "number") {
-    return e
-  } else if (typeof e == "string") {
-    const id = e
-    return m[id]
-  } else if (e.constructor === Unary) {
-    // The only unary operator for e is negation
-    return -E(e)(m)
-  } else if (e.constructor === Binary) {
-    const { op, left: e1, right: e2 } = e
-    switch (op) {
-      case "+":
-        return E(e1)(m) + E(e2)(m)
-      case "-":
-        return E(e1)(m) - E(e2)(m)
-      case "*":
-        return E(e1)(m) * E(e2)(m)
-      case "/":
-        return E(e1)(m) / E(e2)(m)
-      case "%":
-        return E(e1)(m) % E(e2)(m)
-      case "**":
-        return E(e1)(m) ** E(e2)(m)
+  switch (e.constructor) {
+    case Number: {
+      return e
     }
-  } else if (e.constructor === Call) {
-    const { id, args } = e
-    let [params, body] = m[id]
-    for (let i = 0; i < args.length; i++) {
-      m[params[i]] = args[i]
+    case String: {
+      const id = e
+      return m[id]
     }
-    return E(body)(m)
-  } else if (e.constructor === Conditional) {
-    const { test, consequent, alternate } = e
-    return C(test)(m) ? E(consequent)(m) : E(alternate)(m)
+    case Unary: {
+      // The only unary operator for e is negation
+      return -E(e)(m)
+    }
+    case Binary: {
+      const { op, left: e1, right: e2 } = e
+      switch (op) {
+        case "+":
+          return E(e1)(m) + E(e2)(m)
+        case "-":
+          return E(e1)(m) - E(e2)(m)
+        case "*":
+          return E(e1)(m) * E(e2)(m)
+        case "/":
+          return E(e1)(m) / E(e2)(m)
+        case "%":
+          return E(e1)(m) % E(e2)(m)
+        case "**":
+          return E(e1)(m) ** E(e2)(m)
+      }
+    }
+    case Conditional: {
+      const { test, consequent, alternate } = e
+      return C(test)(m) ? E(consequent)(m) : E(alternate)(m)
+    }
+    case Call: {
+      const { id, args } = e
+      let [params, body] = m[id]
+      let localMemory = { ...m }
+      for (let i = 0; i < args.length; i++) {
+        localMemory[params[i]] = args[i]
+      }
+      return E(body)(localMemory)
+    }
   }
 }
 
 const C = (c) => (m) => {
-  if (c === true) {
-    return true
-  } else if (c === false) {
-    return false
-  } else if (c.constructor === Binary) {
-    const { op, left, right } = c
-    switch (op) {
-      case "==":
-        return E(left)(m) === E(right)(m)
-      case "!=":
-        return E(left)(m) !== E(right)(m)
-      case "<":
-        return E(left)(m) < E(right)(m)
-      case "<=":
-        return E(left)(m) <= E(right)(m)
-      case ">":
-        return E(left)(m) >= E(right)(m)
-      case ">=":
-        return E(left)(m) >= E(right)(m)
-      case "&&":
-        return C(left)(m) && C(right)(m)
-      case "||":
-        return C(left)(m) || C(right)(m)
+  switch (c.constructor) {
+    case Boolean: {
+      return c
     }
-  } else if (c.constructor === Unary) {
-    const { operand } = c
-    // The only unary operator for conditional is the NOT
-    return !C(operand)(m)
+    case Unary: {
+      const { operand } = c
+      // The only unary operator for conditional is the NOT
+      return !C(operand)(m)
+    }
+    case Binary: {
+      const { op, left, right } = c
+      switch (op) {
+        case "==":
+          return E(left)(m) === E(right)(m)
+        case "!=":
+          return E(left)(m) !== E(right)(m)
+        case "<":
+          return E(left)(m) < E(right)(m)
+        case "<=":
+          return E(left)(m) <= E(right)(m)
+        case ">":
+          return E(left)(m) >= E(right)(m)
+        case ">=":
+          return E(left)(m) >= E(right)(m)
+        case "&&":
+          return C(left)(m) && C(right)(m)
+        case "||":
+          return C(left)(m) || C(right)(m)
+      }
+    }
   }
 }
 
@@ -161,8 +179,11 @@ class Call {
   }
 }
 
+// Utility functions to make trees very elegantly
+
 const program = (s) => new Program(s)
 const vardec = (i, e) => new VariableDeclaration(i, e)
+const fundec = (f, p, b) => new FunctionDeclaration(f, p, b)
 const print = (e) => new PrintStatement(e)
 const whileLoop = (c, b) => new WhileStatement(c, b)
 const assign = (i, e) => new Assignment(i, e)
@@ -177,8 +198,11 @@ const less = (x, y) => new Binary("<", x, y)
 const lesseq = (x, y) => new Binary("<=", x, y)
 const greater = (x, y) => new Binary(">", x, y)
 const greatereq = (x, y) => new Binary(">=", x, y)
+const call = (f, a) => new Call(f, a)
 const and = (x, y) => new Binary("&&", x, y)
 const or = (x, y) => new Binary("||", x, y)
+
+// Examples of use
 
 console.log(P(program([vardec("x", 2), print("x")])))
 
@@ -192,5 +216,22 @@ console.log(
 )
 
 console.log(
-  P(program([vardec("x", 3), vardec("y", plus("x", 10)), print("x"), print("y")]))
+  P(
+    program([
+      vardec("x", 3),
+      vardec("y", plus("x", 10)),
+      print("x"),
+      print("y"),
+    ])
+  )
+)
+
+console.log(
+  P(
+    program([
+      fundec("plus2", ["x"], plus("x", 2)),
+      print(call("plus2", [8])),
+      print(call("plus2", [55])),
+    ])
+  )
 )
