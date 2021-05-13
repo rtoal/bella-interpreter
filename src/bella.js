@@ -1,6 +1,6 @@
 // Interpreter functions
 
-const P = (p) => {
+function P(p) {
   let [m, o] = [{}, []]
   for (let s of p.body) {
     ;[m, o] = S(s)([m, o])
@@ -8,113 +8,120 @@ const P = (p) => {
   return o
 }
 
-const S = (s) => ([m, o]) => {
-  switch (s.constructor) {
-    case VariableDeclaration: {
-      const { variable: v, initializer: e } = s
-      return [{ ...m, [v]: E(e)(m) }, o]
-    }
-    case PrintStatement: {
-      const { argument: e } = s
-      return [m, [...o, E(e)(m)]]
-    }
-    case Assignment: {
-      const { target: v, source: e } = s
-      return [{ ...m, [v]: E(e)(m) }, o]
-    }
-    case WhileStatement: {
-      const { test, body } = s
-      if (C(test)(m) === false) {
-        return [m, o]
+function S(s) {
+  return ([m, o]) => {
+    switch (s.constructor) {
+      case VariableDeclaration: {
+        const { variable: v, initializer: e } = s
+        return [{ ...m, [v]: E(e)(m) }, o]
       }
-      for (let s1 of body) {
-        ;[m, o] = S(s1)([m, o])
+      case PrintStatement: {
+        const { argument: e } = s
+        return [m, [...o, E(e)(m)]]
       }
-      return S(s)([m, o])
-    }
-    case FunctionDeclaration: {
-      const { name: f, parameters: p, body: b } = s
-      return [{ ...m, [f]: [p, b] }, o]
+      case Assignment: {
+        const { target: v, source: e } = s
+        return [{ ...m, [v]: E(e)(m) }, o]
+      }
+      case WhileStatement: {
+        const { test, body } = s
+        if (C(test)(m) === false) {
+          return [m, o]
+        }
+        for (let s1 of body) {
+          ;[m, o] = S(s1)([m, o])
+        }
+        return S(s)([m, o])
+      }
+      case FunctionDeclaration: {
+        const { name: f, parameters: p, body: b } = s
+        return [{ ...m, [f]: [p, b] }, o]
+      }
     }
   }
 }
 
-const E = (e) => (m) => {
-  switch (e.constructor) {
-    case Number: {
-      return e
-    }
-    case String: {
-      const id = e
-      return m[id]
-    }
-    case Unary: {
-      // The only unary operator for e is negation
-      const { operand: e1 } = e
-      return -E(e1)(m)
-    }
-    case Binary: {
-      const { op, left: e1, right: e2 } = e
-      switch (op) {
-        case "+":
-          return E(e1)(m) + E(e2)(m)
-        case "-":
-          return E(e1)(m) - E(e2)(m)
-        case "*":
-          return E(e1)(m) * E(e2)(m)
-        case "/":
-          return E(e1)(m) / E(e2)(m)
-        case "%":
-          return E(e1)(m) % E(e2)(m)
-        case "**":
-          return E(e1)(m) ** E(e2)(m)
+function E(e) {
+  return (m) => {
+    switch (e.constructor) {
+      case Number: {
+        return e
       }
-    }
-    case Conditional: {
-      const { test: c, consequent: e1, alternate: e2 } = e
-      return C(c)(m) ? E(e1)(m) : E(e2)(m)
-    }
-    case Call: {
-      const { id, args } = e
-      let [params, body] = m[id]
-      let localMemory = { ...m }
-      for (let i = 0; i < args.length; i++) {
-        localMemory[params[i]] = args[i]
+      case String: {
+        const id = e
+        return m[id]
       }
-      return E(body)(localMemory)
+      case Unary: {
+        // The only unary operator for e is negation
+        const { operand: e1 } = e
+        return -E(e1)(m)
+      }
+      case Binary: {
+        const { op, left: e1, right: e2 } = e
+        switch (op) {
+          case "+":
+            return E(e1)(m) + E(e2)(m)
+          case "-":
+            return E(e1)(m) - E(e2)(m)
+          case "*":
+            return E(e1)(m) * E(e2)(m)
+          case "/":
+            return E(e1)(m) / E(e2)(m)
+          case "%":
+            return E(e1)(m) % E(e2)(m)
+          case "**":
+            return E(e1)(m) ** E(e2)(m)
+        }
+      }
+      case Conditional: {
+        const { test: c, consequent: e1, alternate: e2 } = e
+        return C(c)(m) ? E(e1)(m) : E(e2)(m)
+      }
+      case Call: {
+        const { id, args } = e
+        let [params, body] = m[id]
+        let localMemory = { ...m }
+        for (let i = 0; i < args.length; i++) {
+          localMemory[params[i]] = args[i]
+        }
+        return E(body)(localMemory)
+      }
     }
   }
 }
 
-const C = (c) => (m) => {
-  switch (c.constructor) {
-    case Boolean: {
-      return c
-    }
-    case Unary: {
-      const { operand: c1 } = c
-      // The only unary operator for conditional is the NOT
-      return !C(c1)(m)
-    }
-    case Binary: {
-      const { op, left, right } = c
-      switch (op) {
-        case "==":
-          return E(left)(m) === E(right)(m)
-        case "!=":
-          return E(left)(m) !== E(right)(m)
-        case "<":
-          return E(left)(m) < E(right)(m)
-        case "<=":
-          return E(left)(m) <= E(right)(m)
-        case ">":
-          return E(left)(m) >= E(right)(m)
-        case ">=":
-          return E(left)(m) >= E(right)(m)
-        case "&&":
-          return C(left)(m) && C(right)(m)
-        case "||":
-          return C(left)(m) || C(right)(m)
+function C(c) {
+  return (m) => {
+    switch (c.constructor) {
+      case Boolean: {
+        // That's right, c is true or false here
+        return c
+      }
+      case Unary: {
+        const { operand: c1 } = c
+        // The only unary operator for conditional is the NOT
+        return !C(c1)(m)
+      }
+      case Binary: {
+        const { op, left, right } = c
+        switch (op) {
+          case "==":
+            return E(left)(m) === E(right)(m)
+          case "!=":
+            return E(left)(m) !== E(right)(m)
+          case "<":
+            return E(left)(m) < E(right)(m)
+          case "<=":
+            return E(left)(m) <= E(right)(m)
+          case ">":
+            return E(left)(m) >= E(right)(m)
+          case ">=":
+            return E(left)(m) >= E(right)(m)
+          case "&&":
+            return C(left)(m) && C(right)(m)
+          case "||":
+            return C(left)(m) || C(right)(m)
+        }
       }
     }
   }

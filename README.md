@@ -55,7 +55,7 @@ type State = Memory x File
 𝒮⟦while c do s*⟧(m,o) = if 𝒞⟦c1⟧m then 𝒮⟦while c do s*⟧(𝒮*⟦s*⟧(m,o)) else (m,o)
 
 ℰ⟦n⟧m = n
-ℰ⟦i⟧m = m i
+ℰ⟦i⟧m = m[i]
 ℰ⟦e1 + e2⟧m = ℰ⟦e1⟧m + ℰ⟦e2⟧m
 ℰ⟦e1 - e2⟧m = ℰ⟦e1⟧m - ℰ⟦e2⟧m
 ℰ⟦e1 * e2⟧m = ℰ⟦e1⟧m * ℰ⟦e2⟧m
@@ -63,8 +63,8 @@ type State = Memory x File
 ℰ⟦e1 % e2⟧m = ℰ⟦e1⟧m % ℰ⟦e2⟧m
 ℰ⟦e1 ** e2⟧m = ℰ⟦e1⟧m ** ℰ⟦e2⟧m
 ℰ⟦- e⟧m = - ℰ⟦e⟧m
-ℰ⟦i e*⟧m = ______________
-ℰ⟦c ? e1 : e2⟧m = if 𝒞 c m = T then ℰ⟦e1⟧m else ℰ⟦e2⟧m
+ℰ⟦i e*⟧m = let (p*, b) = m[f] in ℰ⟦e1⟧{...m, p[i]: e[i]}_i
+ℰ⟦c ? e1 : e2⟧m = if 𝒞⟦c⟧m = T then ℰ⟦e1⟧m else ℰ⟦e2⟧m
 
 𝒞⟦true⟧m = T
 𝒞⟦false⟧m = F
@@ -80,3 +80,17 @@ type State = Memory x File
 ```
 
 ## Using the Interpreter
+
+Call the P function with a program object, perhaps like so:
+
+```
+console.log(
+  P(
+    program([
+      fundec("plus2", ["x"], plus("x", 2)),
+      print(call("plus2", [8])),
+      print(call("plus2", [55])),
+    ])
+  )
+)
+```
