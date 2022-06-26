@@ -1,0 +1,4 @@
+let z = 100;
+function h(z) = 1 + z;
+print(h(2));
+print(z);
