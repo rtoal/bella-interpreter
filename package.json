@@ -1,0 +1,20 @@
+{
+  "name": "bella-interpreter",
+  "version": "1.0.0",
+  "description": "An interpreter for Bella",
+  "main": "bella.js",
+  "type": "module",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^18.16.2"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "mocha": "^10.2.0"
+  }
+}
