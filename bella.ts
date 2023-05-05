@@ -13,7 +13,7 @@
 
 type BuiltInFunction = (...args: Value[]) => Value;
 type UserFunction = [Identifier[], Expression];
-type Value = number | boolean | Value[] | BuiltInFunction | UserFunction;
+export type Value = number | boolean | Value[] | BuiltInFunction | UserFunction;
 
 type Memory = Map<string, Value>;
 type Output = Value[];
@@ -91,7 +91,7 @@ export class BinaryExpression implements Expression {
   ) {}
   interpret(m: Memory): Value {
     const [x, y] = [this.left.interpret(m), this.right.interpret(m)];
-    if (["+", "-", "*", "/"].includes(this.operator)) {
+    if (["+", "-", "*", "/", "%", "**"].includes(this.operator)) {
       if (typeof x !== "number" || typeof y !== "number") {
         throw new Error("Operands must be numbers");
       }
