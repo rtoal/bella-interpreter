@@ -63,6 +63,8 @@ describe("The interpreter", () => {
     assert.equal(unary("!", bool(false)).interpret(m), true);
     assert.equal(unary("!", id("a")).interpret(m), false);
     assert.equal(unary("!", id("b")).interpret(m), true);
+    assert.throws(() => unary("-", bool(true)).interpret(m));
+    assert.throws(() => unary("!", num(1)).interpret(m));
   });
   it("interprets binary expressions ok", () => {
     const m = new Map<string, bella.Value>([
@@ -91,6 +93,16 @@ describe("The interpreter", () => {
     assert.equal(binary(">=", num(8), num(9)).interpret(m), false);
     assert.equal(binary("&&", bool(true), bool(false)).interpret(m), false);
     assert.equal(binary("||", bool(true), bool(false)).interpret(m), true);
+    assert.throws(() => binary("+", bool(true), num(1)).interpret(m));
+    assert.throws(() => binary("<", bool(true), num(1)).interpret(m));
+    assert.throws(() => binary("&&", num(1), num(2)).interpret(m));
+  });
+  it("throws through the exhaustiveness guard for invalid operators", () => {
+    const m = new Map<string, bella.Value>([]);
+    const badUnaryOp = "~" as unknown as bella.UnaryOperator;
+    assert.throws(() => unary(badUnaryOp, num(1)).interpret(m));
+    const badBinaryOp = "^" as unknown as bella.BinaryOperator;
+    assert.throws(() => binary(badBinaryOp, num(1), num(2)).interpret(m));
   });
   it("interprets conditional expressions ok", () => {
     const m = new Map<string, bella.Value>([]);
