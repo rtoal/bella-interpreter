@@ -40,21 +40,21 @@ export interface Expression {
 }
 
 export class Numeral implements Expression {
-  constructor(public value: number) {}
+  constructor(public readonly value: number) {}
   interpret(_: Memory): Value {
     return this.value;
   }
 }
 
 export class BooleanLiteral implements Expression {
-  constructor(public value: boolean) {}
+  constructor(public readonly value: boolean) {}
   interpret(_: Memory): Value {
     return this.value;
   }
 }
 
 export class Identifier implements Expression {
-  constructor(public name: string) {}
+  constructor(public readonly name: string) {}
   interpret(m: Memory): Value {
     const entity = m.get(this.name);
     if (entity === undefined) {
@@ -65,7 +65,10 @@ export class Identifier implements Expression {
 }
 
 export class UnaryExpression implements Expression {
-  constructor(public operator: string, public expression: Expression) {}
+  constructor(
+    public readonly operator: string,
+    public readonly expression: Expression
+  ) {}
   interpret(m: Memory): Value {
     const x = this.expression.interpret(m);
     if (this.operator === "-") {
@@ -83,67 +86,89 @@ export class UnaryExpression implements Expression {
   }
 }
 
+const ARITHMETIC_OPERATORS = new Set(["+", "-", "*", "/", "%", "**"]);
+const RELATIONAL_OPERATORS = new Set(["<", "<=", "==", "!=", ">=", ">"]);
+const BOOLEAN_OPERATORS = new Set(["&&", "||"]);
+
 export class BinaryExpression implements Expression {
   constructor(
-    public operator: string,
-    public left: Expression,
-    public right: Expression
+    public readonly operator: string,
+    public readonly left: Expression,
+    public readonly right: Expression
   ) {}
   interpret(m: Memory): Value {
     const [x, y] = [this.left.interpret(m), this.right.interpret(m)];
-    if (["+", "-", "*", "/", "%", "**"].includes(this.operator)) {
+    if (ARITHMETIC_OPERATORS.has(this.operator)) {
       if (typeof x !== "number" || typeof y !== "number") {
         throw new TypeError("Operands must be numbers");
       }
-      switch (this.operator) {
-        case "+":
-          return x + y;
-        case "-":
-          return x - y;
-        case "*":
-          return x * y;
-        case "/":
-          return x / y;
-        case "%":
-          return x % y;
-        case "**":
-          return x ** y;
-      }
-    } else if (["<", "<=", "==", "!=", ">=", ">"].includes(this.operator)) {
+      return this.#arithmetic(x, y);
+    } else if (RELATIONAL_OPERATORS.has(this.operator)) {
       if (typeof x !== "number" || typeof y !== "number") {
         throw new TypeError("Operands must be numbers");
       }
-      switch (this.operator) {
-        case "<":
-          return x < y;
-        case "<=":
-          return x <= y;
-        case "==":
-          return x === y;
-        case "!=":
-          return x !== y;
-        case ">=":
-          return x >= y;
-        case ">":
-          return x > y;
-      }
-    } else if (["&&", "||"].includes(this.operator)) {
+      return this.#relational(x, y);
+    } else if (BOOLEAN_OPERATORS.has(this.operator)) {
       if (typeof x !== "boolean" || typeof y !== "boolean") {
         throw new TypeError("Operands must be booleans");
       }
-      switch (this.operator) {
-        case "&&":
-          return x && y;
-        case "||":
-          return x || y;
-      }
+      return this.#boolean(x, y);
     }
     throw new Error("Unknown operator");
+  }
+  #arithmetic(x: number, y: number): number {
+    switch (this.operator) {
+      case "+":
+        return x + y;
+      case "-":
+        return x - y;
+      case "*":
+        return x * y;
+      case "/":
+        return x / y;
+      case "%":
+        return x % y;
+      case "**":
+        return x ** y;
+      default:
+        throw new Error("Unknown operator");
+    }
+  }
+  #relational(x: number, y: number): boolean {
+    switch (this.operator) {
+      case "<":
+        return x < y;
+      case "<=":
+        return x <= y;
+      case "==":
+        return x === y;
+      case "!=":
+        return x !== y;
+      case ">=":
+        return x >= y;
+      case ">":
+        return x > y;
+      default:
+        throw new Error("Unknown operator");
+    }
+  }
+  #boolean(x: boolean, y: boolean): boolean {
+    switch (this.operator) {
+      case "&&":
+        return x && y;
+      case "||":
+        return x || y;
+      default:
+        throw new Error("Unknown operator");
+    }
   }
 }
 
 export class Call implements Expression {
-  constructor(public callee: Identifier, public args: Expression[]) {}
+  constructor(
+    public readonly callee: Identifier,
+    public readonly args: Expression[]
+  ) {}
   interpret(m: Memory): Value {
     const functionValue = m.get(this.callee.name);
     const argValues = this.args.map((arg) => arg.interpret(m));
@@ -167,9 +192,9 @@ export class Call implements Expression {
 
 export class ConditionalExpression implements Expression {
   constructor(
-    public test: Expression,
-    public consequent: Expression,
-    public alternate: Expression
+    public readonly test: Expression,
+    public readonly consequent: Expression,
+    public readonly alternate: Expression
   ) {}
   interpret(m: Memory): Value {
     return this.test.interpret(m)
@@ -179,14 +204,17 @@ export class ConditionalExpression implements Expression {
 }
 
 export class ArrayLiteral implements Expression {
-  constructor(public elements: Expression[]) {}
+  constructor(public readonly elements: Expression[]) {}
   interpret(m: Memory): Value {
     return this.elements.map((e) => e.interpret(m));
   }
 }
 
 export class SubscriptExpression implements Expression {
-  constructor(public array: Expression, public subscript: Expression) {}
+  constructor(
+    public readonly array: Expression,
+    public readonly subscript: Expression
+  ) {}
   interpret(m: Memory): Value {
     const arrayValue = this.array.interpret(m);
     const subscriptValue = this.subscript.interpret(m);
@@ -211,7 +239,10 @@ export interface Statement {
 }
 
 export class VariableDeclaration implements Statement {
-  constructor(public id: Identifier, public expression: Expression) {}
+  constructor(
+    public readonly id: Identifier,
+    public readonly expression: Expression
+  ) {}
   interpret([m, o]: State): State {
     if (m.has(this.id.name)) {
       throw new Error("Identifier already declared");
@@ -223,9 +254,9 @@ export class VariableDeclaration implements Statement {
 
 export class FunctionDeclaration implements Statement {
   constructor(
-    public id: Identifier,
-    public parameters: Identifier[],
-    public expression: Expression
+    public readonly id: Identifier,
+    public readonly parameters: Identifier[],
+    public readonly expression: Expression
   ) {}
   interpret([m, o]: State): State {
     if (m.has(this.id.name)) {
@@ -237,7 +268,10 @@ export class FunctionDeclaration implements Statement {
 }
 
 export class Assignment implements Statement {
-  constructor(public id: Identifier, public expression: Expression) {}
+  constructor(
+    public readonly id: Identifier,
+    public readonly expression: Expression
+  ) {}
   interpret([m, o]: State): State {
     if (!m.has(this.id.name)) {
       throw new Error("Variable not declared");
@@ -248,14 +282,17 @@ export class Assignment implements Statement {
 }
 
 export class PrintStatement implements Statement {
-  constructor(public expression: Expression) {}
+  constructor(public readonly expression: Expression) {}
   interpret([m, o]: State): State {
     return [m, [...o, this.expression.interpret(m)]];
   }
 }
 
 export class WhileStatement implements Statement {
-  constructor(public expression: Expression, public block: Block) {}
+  constructor(
+    public readonly expression: Expression,
+    public readonly block: Block
+  ) {}
   interpret([m, o]: State): State {
     let state: State = [m, o];
     while (this.expression.interpret(state[0])) {
@@ -266,7 +303,7 @@ export class WhileStatement implements Statement {
 }
 
 export class Block {
-  constructor(public statements: Statement[]) {}
+  constructor(public readonly statements: Statement[]) {}
   interpret([m, o]: State): State {
     let state: State = [m, o];
     for (let statement of this.statements) {
@@ -277,7 +314,7 @@ export class Block {
 }
 
 export class Program {
-  constructor(public block: Block) {}
+  constructor(public readonly block: Block) {}
   interpret(): Output {
     const initialMemory: Memory = new Map<string, Value>([
       ["pi", Math.PI as Value],
