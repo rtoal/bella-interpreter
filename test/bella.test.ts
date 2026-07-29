@@ -5,10 +5,13 @@ import * as bella from "../bella.js";
 const id = (i: string) => new bella.Identifier(i);
 const num = (n: number) => new bella.Numeral(n);
 const bool = (x: boolean) => new bella.BooleanLiteral(x);
-const unary = (op: string, x: bella.Expression) =>
+const unary = (op: bella.UnaryOperator, x: bella.Expression) =>
   new bella.UnaryExpression(op, x);
-const binary = (op: string, x: bella.Expression, y: bella.Expression) =>
-  new bella.BinaryExpression(op, x, y);
+const binary = (
+  op: bella.BinaryOperator,
+  x: bella.Expression,
+  y: bella.Expression
+) => new bella.BinaryExpression(op, x, y);
 const cond = (
   test: bella.Expression,
   consequent: bella.Expression,

@@ -19,6 +19,15 @@ type Memory = Map<string, Value>;
 type Output = Value[];
 type State = [Memory, Output];
 
+export type UnaryOperator = "-" | "!";
+export type ArithmeticOperator = "+" | "-" | "*" | "/" | "%" | "**";
+export type RelationalOperator = "<" | "<=" | "==" | "!=" | ">=" | ">";
+export type BooleanOperator = "&&" | "||";
+export type BinaryOperator =
+  | ArithmeticOperator
+  | RelationalOperator
+  | BooleanOperator;
+
 // Custom type guards
 
 function isUserFunction(v: Value): v is UserFunction {
@@ -31,6 +40,28 @@ function isBuiltInFunction(v: Value): v is BuiltInFunction {
 
 function isArray(x: Value): x is Value[] {
   return Array.isArray(x);
+}
+
+const ARITHMETIC_OPERATORS = new Set(["+", "-", "*", "/", "%", "**"]);
+const RELATIONAL_OPERATORS = new Set(["<", "<=", "==", "!=", ">=", ">"]);
+const BOOLEAN_OPERATORS = new Set(["&&", "||"]);
+
+function isArithmeticOperator(op: BinaryOperator): op is ArithmeticOperator {
+  return ARITHMETIC_OPERATORS.has(op);
+}
+
+function isRelationalOperator(op: BinaryOperator): op is RelationalOperator {
+  return RELATIONAL_OPERATORS.has(op);
+}
+
+function isBooleanOperator(op: BinaryOperator): op is BooleanOperator {
+  return BOOLEAN_OPERATORS.has(op);
+}
+
+// Exhaustiveness helper: a compile-time guarantee that every member of a
+// union has been handled, so this is never actually reachable at runtime.
+function assertNever(x: never): never {
+  throw new Error(`Unexpected value: ${JSON.stringify(x)}`);
 }
 
 // Semantic Functions
@@ -66,58 +97,56 @@ export class Identifier implements Expression {
 
 export class UnaryExpression implements Expression {
   constructor(
-    public readonly operator: string,
+    public readonly operator: UnaryOperator,
     public readonly expression: Expression
   ) {}
   interpret(m: Memory): Value {
     const x = this.expression.interpret(m);
-    if (this.operator === "-") {
-      if (typeof x !== "number") {
-        throw new TypeError("Operand must be a number");
-      }
-      return -x;
-    } else if (this.operator === "!") {
-      if (typeof x !== "boolean") {
-        throw new TypeError("Operand must be a boolean");
-      }
-      return !x;
+    switch (this.operator) {
+      case "-":
+        if (typeof x !== "number") {
+          throw new TypeError("Operand must be a number");
+        }
+        return -x;
+      case "!":
+        if (typeof x !== "boolean") {
+          throw new TypeError("Operand must be a boolean");
+        }
+        return !x;
+      default:
+        return assertNever(this.operator);
     }
-    throw new Error("Unknown operator");
   }
 }
 
-const ARITHMETIC_OPERATORS = new Set(["+", "-", "*", "/", "%", "**"]);
-const RELATIONAL_OPERATORS = new Set(["<", "<=", "==", "!=", ">=", ">"]);
-const BOOLEAN_OPERATORS = new Set(["&&", "||"]);
-
 export class BinaryExpression implements Expression {
   constructor(
-    public readonly operator: string,
+    public readonly operator: BinaryOperator,
     public readonly left: Expression,
     public readonly right: Expression
   ) {}
   interpret(m: Memory): Value {
     const [x, y] = [this.left.interpret(m), this.right.interpret(m)];
-    if (ARITHMETIC_OPERATORS.has(this.operator)) {
+    if (isArithmeticOperator(this.operator)) {
       if (typeof x !== "number" || typeof y !== "number") {
         throw new TypeError("Operands must be numbers");
       }
-      return this.#arithmetic(x, y);
-    } else if (RELATIONAL_OPERATORS.has(this.operator)) {
+      return this.#arithmetic(this.operator, x, y);
+    } else if (isRelationalOperator(this.operator)) {
       if (typeof x !== "number" || typeof y !== "number") {
         throw new TypeError("Operands must be numbers");
       }
-      return this.#relational(x, y);
-    } else if (BOOLEAN_OPERATORS.has(this.operator)) {
+      return this.#relational(this.operator, x, y);
+    } else if (isBooleanOperator(this.operator)) {
       if (typeof x !== "boolean" || typeof y !== "boolean") {
         throw new TypeError("Operands must be booleans");
       }
-      return this.#boolean(x, y);
+      return this.#boolean(this.operator, x, y);
     }
-    throw new Error("Unknown operator");
+    return assertNever(this.operator);
   }
-  #arithmetic(x: number, y: number): number {
-    switch (this.operator) {
+  #arithmetic(op: ArithmeticOperator, x: number, y: number): number {
+    switch (op) {
       case "+":
         return x + y;
       case "-":
@@ -131,11 +160,11 @@ export class BinaryExpression implements Expression {
       case "**":
         return x ** y;
       default:
-        throw new Error("Unknown operator");
+        return assertNever(op);
     }
   }
-  #relational(x: number, y: number): boolean {
-    switch (this.operator) {
+  #relational(op: RelationalOperator, x: number, y: number): boolean {
+    switch (op) {
       case "<":
         return x < y;
       case "<=":
@@ -149,17 +178,17 @@ export class BinaryExpression implements Expression {
       case ">":
         return x > y;
       default:
-        throw new Error("Unknown operator");
+        return assertNever(op);
     }
   }
-  #boolean(x: boolean, y: boolean): boolean {
-    switch (this.operator) {
+  #boolean(op: BooleanOperator, x: boolean, y: boolean): boolean {
+    switch (op) {
       case "&&":
         return x && y;
       case "||":
         return x || y;
       default:
-        throw new Error("Unknown operator");
+        return assertNever(op);
     }
   }
 }
@@ -328,8 +357,4 @@ export class Program {
     const [_, o] = this.block.interpret([initialMemory, []]);
     return o;
   }
-}
-
-export function interpret(p: Program) {
-  return p.interpret();
 }
