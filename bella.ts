@@ -154,7 +154,8 @@ export class Call implements Expression {
       if (parameters.length !== this.args.length) {
         throw new Error("Wrong number of arguments");
       }
-      const locals = parameters.map((p, i) => [p.name, argValues[i]] as const);
+      // Safe: parameters.length === argValues.length, checked above.
+      const locals = parameters.map((p, i) => [p.name, argValues[i]!] as const);
       return expression.interpret(new Map([...m, ...locals]));
     } else if (isBuiltInFunction(functionValue)) {
       return functionValue(...argValues);
@@ -195,7 +196,11 @@ export class SubscriptExpression implements Expression {
     if (!isArray(arrayValue)) {
       throw new Error("Not an array");
     }
-    return arrayValue[subscriptValue];
+    const element = arrayValue[subscriptValue];
+    if (element === undefined) {
+      throw new Error("Subscript out of range");
+    }
+    return element;
   }
 }
 
