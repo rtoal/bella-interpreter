@@ -70,12 +70,12 @@ export class UnaryExpression implements Expression {
     const x = this.expression.interpret(m);
     if (this.operator === "-") {
       if (typeof x !== "number") {
-        throw new Error("Operand must be a number");
+        throw new TypeError("Operand must be a number");
       }
       return -x;
     } else if (this.operator === "!") {
       if (typeof x !== "boolean") {
-        throw new Error("Operand must be a boolean");
+        throw new TypeError("Operand must be a boolean");
       }
       return !x;
     }
@@ -93,7 +93,7 @@ export class BinaryExpression implements Expression {
     const [x, y] = [this.left.interpret(m), this.right.interpret(m)];
     if (["+", "-", "*", "/", "%", "**"].includes(this.operator)) {
       if (typeof x !== "number" || typeof y !== "number") {
-        throw new Error("Operands must be numbers");
+        throw new TypeError("Operands must be numbers");
       }
       switch (this.operator) {
         case "+":
@@ -111,7 +111,7 @@ export class BinaryExpression implements Expression {
       }
     } else if (["<", "<=", "==", "!=", ">=", ">"].includes(this.operator)) {
       if (typeof x !== "number" || typeof y !== "number") {
-        throw new Error("Operands must be numbers");
+        throw new TypeError("Operands must be numbers");
       }
       switch (this.operator) {
         case "<":
@@ -129,7 +129,7 @@ export class BinaryExpression implements Expression {
       }
     } else if (["&&", "||"].includes(this.operator)) {
       if (typeof x !== "boolean" || typeof y !== "boolean") {
-        throw new Error("Operands must be booleans");
+        throw new TypeError("Operands must be booleans");
       }
       switch (this.operator) {
         case "&&":
@@ -191,7 +191,7 @@ export class SubscriptExpression implements Expression {
     const arrayValue = this.array.interpret(m);
     const subscriptValue = this.subscript.interpret(m);
     if (typeof subscriptValue !== "number") {
-      throw new Error("Subscript must be a number");
+      throw new TypeError("Subscript must be a number");
     }
     if (!isArray(arrayValue)) {
       throw new Error("Not an array");
