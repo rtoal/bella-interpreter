@@ -22,7 +22,7 @@ type State = [Memory, Output];
 // Custom type guards
 
 function isUserFunction(v: Value): v is UserFunction {
-  return Array.isArray(v) && Array.isArray(v[0]) && v[0].length === 2;
+  return Array.isArray(v) && v.length === 2 && Array.isArray(v[0]);
 }
 
 function isBuiltInFunction(v: Value): v is BuiltInFunction {
