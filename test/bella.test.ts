@@ -199,4 +199,23 @@ describe("The interpreter", () => {
     );
     assert.deepEqual(p.interpret(), [0, 1, 4]);
   });
+  it('illustrates dynamic scope', () => {
+    const p = program(
+      block([
+        fundec(id("f"), [], id("z")),
+        vardec(id("z"), num(42)),
+        print(call(id("f"), [])),
+      ])
+    );
+    assert.deepEqual(p.interpret(), [42]);
+  });
+  it('supports recursion', () => {
+    const p = program(
+      block([
+        fundec(id("fact"), [id("n")], cond(binary("==", id("n"), num(0)), num(1), binary("*", id("n"), call(id("fact"), [binary("-", id("n"), num(1))])))),
+        print(call(id("fact"), [num(5)])),
+      ])
+    );
+    assert.deepEqual(p.interpret(), [120]);
+  });
 });
